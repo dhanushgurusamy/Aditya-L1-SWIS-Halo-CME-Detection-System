@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>CME Detection Dashboard</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: #f4f7f6;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            margin: 0;
+            color: #2c3e50;
+        }
+
+        .header p {
+            margin: 5px 0;
+            color: #7f8c8d;
+        }
+
+        .container {
+            display: flex;
+            gap: 20px;
+        }
+
+        .sidebar {
+            flex: 1;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .main-content {
+            flex: 3;
+        }
+
+        .plot-container {
+            background-color: #fff;
+            padding: 10px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            border-bottom: 2px solid #e0e0e0;
+            padding-bottom: 10px;
+            margin-top: 0;
+            color: #34495e;
+        }
+
+        .metric {
+            background-color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .metric h3 {
+            margin: 0 0 5px 0;
+            color: #2980b9;
+        }
+
+        .metric p {
+            margin: 0;
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+
+        .event {
+            border: 1px solid #ddd;
+            padding: 15px;
+            border-radius: 5px;
+            margin-bottom: 10px;
+            background: #fafafa;
+        }
+
+        .event-header {
+            font-weight: bold;
+            font-size: 1.05em;
+            margin-bottom: 10px;
+        }
+
+        .event-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 5px 15px;
+            font-size: 0.9em;
+        }
+
+        .confidence-high { color: #27ae60; }
+        .confidence-medium { color: #f39c12; }
+        .confidence-low { color: #c0392b; }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>CME Detection System</h1>
+        <p>Aditya L1 SWIS Real-Time Monitoring</p>
+    </div>
+
+    <div class="container">
+
+        <!-- Sidebar -->
+        <div class="sidebar">
+
+            <h2>Summary</h2>
+
+            <div class="metric">
+                <h3>Total Events Detected</h3>
+                <p>{{ summary.total_events or 0 }}</p>
+            </div>
+
+            <div class="metric">
+                <h3>Detection Rate</h3>
+                <p>
+                    {% if summary.detection_rate is not none %}
+                        {{ "%.2f"|format(summary.detection_rate * 100) }}%
+                    {% else %}
+                        0.00%
+                    {% endif %}
+                </p>
+            </div>
+
+            <h2>Detected Events</h2>
+
+            {% if events and events|length > 0 %}
+                {% for event in events %}
+                    <div class="event">
+
+                        <div class="event-header">
+                            Event {{ loop.index }}
+                            {% if event.confidence %}
+                                ({{ event.confidence }} Confidence)
+                            {% endif %}
+                        </div>
+
+                        <div class="event-details">
+
+                            <span><strong>Start:</strong></span>
+                            <span>{{ event.start_time or "N/A" }}</span>
+
+                            <span><strong>End:</strong></span>
+                            <span>{{ event.end_time or "N/A" }}</span>
+
+                            <span><strong>Duration:</strong></span>
+                            <span>{{ event.duration_hours or 0 }} hrs</span>
+
+                            <span><strong>Type:</strong></span>
+                            <span>{{ event.event_type or "Unknown" }}</span>
+
+                            <span><strong>Max Velocity:</strong></span>
+                            <span>
+                                {% if event.max_velocity %}
+                                    {{ "%.0f"|format(event.max_velocity) }} km/s
+                                {% else %}
+                                    N/A
+                                {% endif %}
+                            </span>
+
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <p>No CME events were detected.</p>
+            {% endif %}
+
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <h2>Interactive Time-Series Plot</h2>
+            <div class="plot-container">
+                <iframe src="{{ url_for('static', filename='plots/cme_dashboard.html') }}"
+                        width="100%"
+                        height="850"
+                        frameborder="0">
+                </iframe>
+            </div>
+        </div>
+
+    </div>
+
+</body>
+</html>
